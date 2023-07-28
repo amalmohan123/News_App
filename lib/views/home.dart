@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:news_api/core/constance.dart';
 import 'package:news_api/helper/data.dart';
@@ -12,16 +13,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<ArticleModel> articles = [];
+  // List<CategoryModel> categories=<CategoryModel>[];
+  List<ArticleModel> articles = <ArticleModel>[];
   bool loading = true;
 
   @override
   void initState() {
     super.initState();
     getCategories();
+    getNews();
   }
 
-  getNews() async {
+  Future<void> getNews() async {
     News newsClass = News();
     await newsClass.getNews();
     articles = newsClass.news;
@@ -56,24 +59,42 @@ class _HomePageState extends State<HomePage> {
                   child: const CircularProgressIndicator(strokeWidth: 4),
                 ),
               )
-            : Container(
-                child: Column(
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 15),
-                      height: 70,
-                      child: ListView.builder(
-                          itemCount: categories.length,
+            : SingleChildScrollView(
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  child: Column(
+                    children: [
+                      Container(
+                        height: 70,
+                        child: ListView.builder(
+                            itemCount: categories.length,
+                            shrinkWrap: true,
+                            scrollDirection: Axis.horizontal,
+                            itemBuilder: (context, index) {
+                              return CategoryTile(
+                                imageUrl: categories[index].imageUrl,
+                                categoryName: categories[index].categoryName,
+                              );
+                            }),
+                      ),
+                      // Blogs
+                      Container(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: ListView.builder(
+                          itemCount: articles.length,
                           shrinkWrap: true,
-                          scrollDirection: Axis.horizontal,
+                          physics: ClampingScrollPhysics(),
                           itemBuilder: (context, index) {
-                            return CategoryTile(
-                              imageUrl: categories[index].imageUrl,
-                              categoryName: categories[index].categoryName,
+                            return BlogTile(
+                              imageUrl: articles[index].urlToImage,
+                              title: articles[index].title,
+                              desc: articles[index].description,
                             );
-                          }),
-                    )
-                  ],
+                          },
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
       ),
@@ -94,11 +115,14 @@ class CategoryTile extends StatelessWidget {
         margin: const EdgeInsets.only(right: 15),
         child: Stack(
           children: [
-            Image.network(
-              imageUrl,
-              width: 120,
-              height: 60,
-              fit: BoxFit.cover,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: CachedNetworkImage(
+                imageUrl: imageUrl,
+                width: 120,
+                height: 60,
+                fit: BoxFit.cover,
+              ),
             ),
             Container(
               alignment: Alignment.center,
@@ -106,6 +130,7 @@ class CategoryTile extends StatelessWidget {
               height: 60,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(6),
+
                 // color: blackColor,
               ),
               child: Text(
@@ -137,9 +162,26 @@ class BlogTile extends StatelessWidget {
     return Container(
       child: Column(
         children: [
-          Image.network(imageUrl),
-          Text(title),
-          Text(desc),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: Image.network(imageUrl)),
+          SizedBox(height: 10,),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: bold,
+              fontSize: 18,
+              letterSpacing: 1.5,
+              // color: blackColor
+            ),
+          ),
+          Text(
+            desc,
+            style: const TextStyle(
+              color: grayColor,
+            ),
+          ),
+           SizedBox(height: 10,),
         ],
       ),
     );
